@@ -146,12 +146,11 @@ export function PostDetail({
                 key={i}
                 className={
                   i === 0
-                    ? "border-l-4 border-gold pl-4 font-display text-lg font-semibold leading-relaxed text-ink"
-                    : "text-[15.5px] leading-relaxed text-ink-soft"
+                    ? "rich-editor border-l-4 border-gold pl-4 font-display text-lg font-semibold leading-relaxed text-ink"
+                    : "rich-editor text-[15.5px] leading-relaxed text-ink-soft"
                 }
-              >
-                {para}
-              </p>
+                dangerouslySetInnerHTML={{ __html: para }}
+              />
             ))}
           </div>
 
