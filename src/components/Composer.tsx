@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { CATEGORIES, CATEGORY_META, currentUser } from "../data";
-import type { Category, Post } from "../data";
+import type { Category, Draft, Post } from "../data";
 import { CloseIcon, GradCap, MaskIcon, Pen, Spark } from "./icons";
 
 /* ---------- tiny toolbar glyphs ---------- */
@@ -76,19 +76,29 @@ const Divider = () => <span className="mx-1 h-6 w-0.5 shrink-0 rounded bg-line" 
 const stripTags = (html: string): string => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 export function Composer({
-  onClose, onPublish, notify,
+  onClose, onPublish, onSaveDraft, notify, initial,
 }: {
   onClose: () => void;
   onPublish: (p: Post) => void;
+  onSaveDraft: (d: Draft) => void;
   notify: (msg: string) => void;
+  initial?: Draft | null;
 }) {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<Category>("Campus Life");
-  const [anonymous, setAnonymous] = useState(false);
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [category, setCategory] = useState<Category>(initial?.category ?? "Campus Life");
+  const [anonymous, setAnonymous] = useState(initial?.anonymous ?? false);
   const [error, setError] = useState("");
   const [words, setWords] = useState(0);
   const [active, setActive] = useState<Record<string, boolean>>({});
   const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initial?.bodyHtml && editorRef.current) {
+      editorRef.current.innerHTML = initial.bodyHtml;
+      refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const refresh = () => {
     const el = editorRef.current;
@@ -173,6 +183,25 @@ export function Composer({
       tags: [`#${category.replace(/\s+/g, "")}`, "#HCU"],
     };
     onPublish(post);
+  };
+
+  const saveDraft = () => {
+    const bodyHtml = editorRef.current?.innerHTML ?? "";
+    const hasContent = title.trim().length > 0 || plainText().length > 0;
+    if (!hasContent) {
+      setError("Write a headline or a few words before saving a draft.");
+      return;
+    }
+    onSaveDraft({
+      id: initial?.id ?? `d${Date.now()}`,
+      title: title.trim() || "Untitled draft",
+      bodyHtml,
+      category,
+      anonymous,
+      updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
+    });
+    notify("Draft saved — find it in your Creator Studio");
+    onClose();
   };
 
   return (
@@ -342,10 +371,10 @@ export function Composer({
 
           <div className="flex flex-wrap items-center gap-2 border-t-2 border-line pt-4">
             <p className="mr-auto flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-ink-soft">
-              <Spark className="h-3.5 w-3.5 text-gold" /> AI assistant available in full release
+              <Spark className="h-3.5 w-3.5 text-gold" /> Auto-saves nothing — your words, your control
             </p>
             <button
-              onClick={() => { notify("Draft saved to your studio"); onClose(); }}
+              onClick={saveDraft}
               className="rounded-lg border-2 border-ink bg-card px-4 py-2.5 font-display text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-block-sm active:translate-y-0"
             >
               Save draft

@@ -8,7 +8,7 @@ const TABS: FeedTab[] = ["For You", "Trending", "Latest"];
 
 export function Feed({
   posts, announcements, tab, onTab, category, onCategory, query, onClearQuery,
-  onOpen, onLike, onUseful, onSave, onShare, onVote,
+  onOpen, onLike, onUseful, onSave, onShare, onVote, onReport, onTag, onShareNotice, onWrite,
 }: {
   posts: Post[];
   announcements: Announcement[];
@@ -24,6 +24,10 @@ export function Feed({
   onSave: (id: string) => void;
   onShare: (id: string) => void;
   onVote: (postId: string, option: number) => void;
+  onReport: (id: string) => void;
+  onTag: (tag: string) => void;
+  onShareNotice: (id: string) => void;
+  onWrite: () => void;
 }) {
   const q = query.trim().toLowerCase().replace(/^#/, "");
 
@@ -123,9 +127,11 @@ export function Feed({
               onSave={() => onSave(item.post.id)}
               onShare={() => onShare(item.post.id)}
               onVote={(o) => onVote(item.post.id, o)}
+              onReport={() => onReport(item.post.id)}
+              onTag={onTag}
             />
           ) : (
-            <AnnouncementCard key={item.a.id} a={item.a} />
+            <AnnouncementCard key={item.a.id} a={item.a} onShare={() => onShareNotice(item.a.id)} />
           )
         )}
 
@@ -136,8 +142,14 @@ export function Feed({
             </span>
             <p className="mt-4 font-display text-xl font-extrabold">No stories on this frequency</p>
             <p className="mt-1 max-w-sm text-sm text-ink-soft">
-              Try another category or tab — or be the first voice: hit Write and break the story yourself.
+              Try another category or tab — or be the first voice and break the story yourself.
             </p>
+            <button
+              onClick={onWrite}
+              className="mt-5 flex items-center gap-2 rounded-lg border-2 border-ink bg-gold px-5 py-2.5 font-display text-sm font-bold shadow-block transition-all hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_var(--color-ink)] active:translate-y-0 active:shadow-block-sm"
+            >
+              <Megaphone className="h-4 w-4" /> Write the first story
+            </button>
           </div>
         )}
       </div>

@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { events, fmt } from "../data";
 import { resolveImg } from "../lib/images";
+import { downloadICS } from "../lib/ics";
 import { Calendar, MapPin, Clock, Users } from "./icons";
 
 const TAGS = ["All", "Social", "Sports", "Career", "Culture"] as const;
 type Tag = (typeof TAGS)[number];
 
 export function EventsView({
-  rsvps, onRsvp, notify,
+  rsvps, onRsvp, notify, campus,
 }: {
   rsvps: Set<string>;
   onRsvp: (id: string) => void;
   notify: (msg: string) => void;
+  campus: string;
 }) {
   const [tag, setTag] = useState<Tag>("All");
   const visible = events.filter((e) => tag === "All" || e.tag === tag);
@@ -114,7 +116,10 @@ export function EventsView({
                     {going ? "You're going ✓" : "RSVP — I'm in"}
                   </button>
                   <button
-                    onClick={() => notify(`${e.title} added to your calendar`)}
+                    onClick={() => {
+                      downloadICS(e, campus);
+                      notify(`${e.title} — .ics file downloaded to your device`);
+                    }}
                     className="rounded-lg border-2 border-ink/25 px-3.5 py-2.5 text-sm font-bold transition-all hover:-translate-y-0.5 hover:border-ink hover:shadow-block-sm active:translate-y-0"
                   >
                     + Calendar

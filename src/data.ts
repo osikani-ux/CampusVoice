@@ -57,6 +57,15 @@ export interface Poll {
   voted: number | null;
 }
 
+export interface Draft {
+  id: string;
+  title: string;
+  bodyHtml: string;
+  category: Category;
+  anonymous: boolean;
+  updated: string;
+}
+
 export interface Post {
   id: string;
   title: string;
@@ -75,6 +84,7 @@ export interface Post {
   usefulMarked: boolean;
   saved: boolean;
   trending?: boolean;
+  reported?: boolean;
   image?: string;
   cover?: { bg: string; big: string; sub: string };
   poll?: Poll;

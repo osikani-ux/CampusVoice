@@ -95,9 +95,12 @@ export function TopBar({
                     {c === campus && <Check className="h-4 w-4 text-pine" />}
                   </button>
                 ))}
-                <p className="border-t-2 border-line px-4 py-2 font-mono text-[10px] text-ink-soft">
+                <button
+                  onClick={() => { setCampusOpen(false); notify("Campus onboarding: 47 universities live — request yours in Settings"); }}
+                  className="w-full border-t-2 border-line px-4 py-2 text-left font-mono text-[10px] text-ink-soft transition-colors hover:bg-gold/15 hover:text-ink"
+                >
                   47 campuses onboard this semester →
-                </p>
+                </button>
               </div>
             </>
           )}
@@ -152,12 +155,17 @@ export function TopBar({
                 </div>
                 <ul className="max-h-80 overflow-y-auto thin-scroll">
                   {notifs.map((n) => (
-                    <li key={n.id} className="flex gap-3 border-b border-line/70 px-4 py-3 text-sm leading-snug transition-colors hover:bg-gold/10">
-                      <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.unread ? "bg-gold" : "bg-line"}`} />
-                      <span className="flex-1">
-                        {n.text}
-                        <span className="ml-2 font-mono text-[10px] text-ink-soft">{n.time}</span>
-                      </span>
+                    <li key={n.id} className="border-b border-line/70">
+                      <button
+                        onClick={() => setNotifs((ns) => ns.map((x) => (x.id === n.id ? { ...x, unread: false } : x)))}
+                        className="flex w-full gap-3 px-4 py-3 text-left text-sm leading-snug transition-colors hover:bg-gold/10"
+                      >
+                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.unread ? "bg-gold" : "bg-line"}`} />
+                        <span className="flex-1">
+                          {n.text}
+                          <span className="ml-2 font-mono text-[10px] text-ink-soft">{n.time}</span>
+                        </span>
+                      </button>
                     </li>
                   ))}
                 </ul>

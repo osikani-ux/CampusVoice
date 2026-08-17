@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { currentUser, fmt } from "../data";
+import type { Draft } from "../data";
 import { useCountUp } from "../lib/hooks";
 import {
-  BadgeCheck, Bulb, Chat, Flame, GradCap, Spark, Studio, Trophy,
+  BadgeCheck, Bulb, Chat, Flame, GradCap, Pen, Spark, Studio, TrashIcon, Trophy,
 } from "./icons";
 
 const TOP_ARTICLES = [
@@ -29,8 +30,16 @@ function Stat({ label, value, suffix, delay }: { label: string; value: number; s
   );
 }
 
-export function StudioView({ notify }: { notify: (msg: string) => void }) {
+export function StudioView({
+  notify, drafts, onEditDraft, onDeleteDraft,
+}: {
+  notify: (msg: string) => void;
+  drafts: Draft[];
+  onEditDraft: (d: Draft) => void;
+  onDeleteDraft: (id: string) => void;
+}) {
   const [mounted, setMounted] = useState(false);
+  const [premium, setPremium] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);
@@ -194,6 +203,46 @@ export function StudioView({ notify }: { notify: (msg: string) => void }) {
         </ul>
       </section>
 
+      {/* Drafts */}
+      {drafts.length > 0 && (
+        <section className="reveal mt-6 overflow-hidden rounded-xl border-2 border-ink bg-card shadow-block-sm" style={{ transitionDelay: "110ms" }}>
+          <header className="flex items-center justify-between border-b-2 border-ink bg-paper px-5 py-3">
+            <p className="flex items-center gap-1.5 font-display text-base font-extrabold">
+              <Pen className="h-4 w-4 text-pine" /> Your drafts
+            </p>
+            <span className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">{drafts.length} saved</span>
+          </header>
+          <ul>
+            {drafts.map((d) => (
+              <li key={d.id} className="flex items-center gap-3 border-b border-line/70 px-5 py-3.5 last:border-0">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 border-ink/25 bg-paper font-display text-xs font-extrabold text-ink-soft">
+                  {d.title[0]?.toUpperCase() ?? "?"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-sm font-bold">{d.title}</p>
+                  <p className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+                    {d.category} · saved {d.updated}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onEditDraft(d)}
+                  className="rounded-lg border-2 border-ink bg-gold px-3 py-1.5 font-display text-xs font-bold transition-all hover:-translate-y-0.5 hover:shadow-block-sm active:translate-y-0"
+                >
+                  Resume
+                </button>
+                <button
+                  onClick={() => onDeleteDraft(d.id)}
+                  className="grid h-8 w-8 place-items-center rounded-lg border-2 border-ink/20 text-ink-soft transition-all hover:-translate-y-0.5 hover:border-rasp hover:text-rasp hover:shadow-block-sm active:translate-y-0"
+                  aria-label={`Delete draft ${d.title}`}
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Engagement + premium */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <section className="reveal rounded-xl border-2 border-ink bg-card p-5 shadow-block-sm" style={{ transitionDelay: "140ms" }}>
@@ -247,10 +296,20 @@ export function StudioView({ notify }: { notify: (msg: string) => void }) {
               ))}
             </ul>
             <button
-              onClick={() => notify("Premium trial started — 30 days free, cancel anytime")}
-              className="mt-4 w-full rounded-lg border-2 border-ink bg-ink px-4 py-2.5 font-display text-sm font-bold text-gold transition-all hover:-translate-y-0.5 hover:shadow-block active:translate-y-0"
+              onClick={() => {
+                if (!premium) {
+                  setPremium(true);
+                  notify("Premium trial started — 30 days free, cancel anytime");
+                }
+              }}
+              disabled={premium}
+              className={`mt-4 w-full rounded-lg border-2 px-4 py-2.5 font-display text-sm font-bold transition-all active:translate-y-0 ${
+                premium
+                  ? "cursor-default border-paper/40 bg-ink/20 text-ink"
+                  : "border-ink bg-ink text-gold hover:-translate-y-0.5 hover:shadow-block"
+              }`}
             >
-              Try 30 days free · then GHS 15/mo
+              {premium ? "✓ Premium trial active" : "Try 30 days free · then GHS 15/mo"}
             </button>
           </div>
         </section>

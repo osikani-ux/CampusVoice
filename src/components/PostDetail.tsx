@@ -3,6 +3,7 @@ import { CATEGORY_META, currentUser, fmt } from "../data";
 import type { Post } from "../data";
 import { resolveImg } from "../lib/images";
 import { PollBlock } from "./FeedCard";
+import { ReportModal } from "./Modals";
 import {
   ArrowLeft, BadgeCheck, Bookmark, Bulb, Chat, Clock, CloseIcon,
   Heart, MaskIcon, Send, Share,
@@ -21,9 +22,11 @@ export function PostDetail({
   onComment: (postId: string, text: string) => void;
   onFollow: (id: string) => void;
   followed: boolean;
-  onReport: () => void;
+  onReport: (reason: string, details: string) => void;
+  onTag: (tag: string) => void;
 }) {
   const [draft, setDraft] = useState("");
+  const [reportOpen, setReportOpen] = useState(false);
   const meta = CATEGORY_META[post.category];
   const img = resolveImg(post.image);
   const own = post.author.id === currentUser.id && !post.anonymous;
@@ -159,9 +162,13 @@ export function PostDetail({
           {/* Tags */}
           <div className="mt-6 flex flex-wrap gap-2">
             {post.tags.map((t) => (
-              <span key={t} className="rounded-md border-2 border-ink/15 bg-card px-2 py-1 font-mono text-[11px] font-semibold text-pine">
+              <button
+                key={t}
+                onClick={() => onTag(t)}
+                className="rounded-md border-2 border-ink/15 bg-card px-2 py-1 font-mono text-[11px] font-semibold text-pine transition-all hover:-translate-y-0.5 hover:border-ink hover:bg-gold/25"
+              >
                 {t}
-              </span>
+              </button>
             ))}
           </div>
 
@@ -257,7 +264,7 @@ export function PostDetail({
               Community guidelines apply · harassment, doxxing and scams are removed
             </p>
             <button
-              onClick={onReport}
+              onClick={() => setReportOpen(true)}
               className="shrink-0 font-mono text-[11px] font-bold uppercase tracking-wide text-rasp underline decoration-rasp/40 underline-offset-4 transition-colors hover:decoration-rasp"
             >
               Report story
@@ -265,6 +272,17 @@ export function PostDetail({
           </div>
         </div>
       </div>
+
+      {reportOpen && (
+        <ReportModal
+          target={post.title.length > 42 ? `${post.title.slice(0, 42)}…` : post.title}
+          onClose={() => setReportOpen(false)}
+          onSubmit={(reason, details) => {
+            setReportOpen(false);
+            onReport(reason, details);
+          }}
+        />
+      )}
     </div>
   );
 }

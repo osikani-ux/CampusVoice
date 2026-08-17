@@ -3,7 +3,7 @@ import { CATEGORY_META, fmt } from "../data";
 import type { Announcement, Poll, Post } from "../data";
 import { resolveImg } from "../lib/images";
 import {
-  BadgeCheck, Bookmark, Bulb, Chat, Clock, Heart, MaskIcon,
+  BadgeCheck, Bookmark, Bulb, Chat, Clock, Flag, Heart, MaskIcon,
   Megaphone, Share, Spark,
 } from "./icons";
 
@@ -78,7 +78,7 @@ export function PollBlock({
 
 /* ---------------- Announcement card ---------------- */
 
-export function AnnouncementCard({ a }: { a: Announcement }) {
+export function AnnouncementCard({ a, onShare }: { a: Announcement; onShare?: () => void }) {
   return (
     <article className="reveal relative overflow-hidden rounded-xl border-2 border-ink bg-ink p-5 text-paper shadow-block">
       <div
@@ -104,9 +104,19 @@ export function AnnouncementCard({ a }: { a: Announcement }) {
               {a.org} <BadgeCheck className="h-4 w-4 text-gold" />
             </p>
             <p className="mt-1 text-sm leading-relaxed text-paper/90">{a.text}</p>
-            <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-paper/60">
-              {a.time} ago · official notice
-            </p>
+            <div className="mt-2.5 flex items-center justify-between gap-2">
+              <p className="font-mono text-[10px] uppercase tracking-wider text-paper/60">
+                {a.time} ago · official notice
+              </p>
+              {onShare && (
+                <button
+                  onClick={onShare}
+                  className="flex items-center gap-1.5 rounded-lg border-2 border-paper/30 px-2.5 py-1 text-xs font-bold text-paper transition-all hover:-translate-y-0.5 hover:border-gold hover:text-gold active:translate-y-0"
+                >
+                  <Share className="h-3.5 w-3.5" /> Share
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -117,7 +127,7 @@ export function AnnouncementCard({ a }: { a: Announcement }) {
 /* ---------------- Post card ---------------- */
 
 export function FeedCard({
-  post, index, onOpen, onLike, onUseful, onSave, onShare, onVote,
+  post, index, onOpen, onLike, onUseful, onSave, onShare, onVote, onReport, onTag,
 }: {
   post: Post;
   index: number;
@@ -127,6 +137,8 @@ export function FeedCard({
   onSave: () => void;
   onShare: () => void;
   onVote: (i: number) => void;
+  onReport: () => void;
+  onTag: (tag: string) => void;
 }) {
   const meta = CATEGORY_META[post.category];
   const img = resolveImg(post.image);
@@ -207,6 +219,26 @@ export function FeedCard({
         </button>
         <p className="mt-2 text-[15px] leading-relaxed text-ink-soft">{post.excerpt}</p>
 
+        {/* Tags */}
+        {post.tags.length > 0 && (
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {post.tags.map((t) => (
+              <button
+                key={t}
+                onClick={() => onTag(t)}
+                className="rounded-md border-2 border-ink/15 bg-paper px-2 py-0.5 font-mono text-[10px] font-bold text-pine transition-all hover:-translate-y-0.5 hover:border-ink hover:bg-gold/25"
+              >
+                {t}
+              </button>
+            ))}
+            {post.reported && (
+              <span className="rounded-md border-2 border-dashed border-rasp/60 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide text-rasp">
+                Under review
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Visual */}
         {img && (
           <button onClick={onOpen} className="mt-4 block w-full overflow-hidden rounded-lg border-2 border-ink">
@@ -281,6 +313,19 @@ export function FeedCard({
           >
             <Share className="h-4 w-4" />
             <span className="hidden sm:inline">Share</span>
+          </button>
+          <button
+            onClick={onReport}
+            disabled={post.reported}
+            title="Report this story"
+            className={`grid h-9 w-9 place-items-center rounded-lg border-2 transition-all active:translate-y-0 ${
+              post.reported
+                ? "cursor-not-allowed border-rasp/40 bg-rasp/10 text-rasp"
+                : "border-ink/20 hover:-translate-y-0.5 hover:border-rasp hover:text-rasp hover:shadow-block-sm"
+            }`}
+            aria-label="Report this story"
+          >
+            <Flag className="h-4 w-4" />
           </button>
         </div>
       </div>

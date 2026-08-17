@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import {
   announcements, currentUser, events, fmt, initialPosts,
 } from "./data";
-import type { Post } from "./data";
-import type { Category } from "./data";
+import type { Category, Draft, Post } from "./data";
 import { useRevealAll } from "./lib/hooks";
 import { MobileNav, Sidebar, Ticker, TopBar } from "./components/Shell";
 import type { View } from "./components/Shell";
@@ -16,6 +15,7 @@ import { EventsView } from "./components/EventsView";
 import { MarketView } from "./components/MarketView";
 import { DiscoverView } from "./components/DiscoverView";
 import { StudioView } from "./components/StudioView";
+import { InfoModal, ReportModal } from "./components/Modals";
 import { Check, WaveHand } from "./components/icons";
 
 interface Toast {
@@ -38,11 +38,20 @@ export default function App() {
   const [category, setCategory] = useState<"All" | Category>("All");
   const [query, setQuery] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerInitial, setComposerInitial] = useState<Draft | null>(null);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [reportFor, setReportFor] = useState<string | null>(null);
+  const [infoTopic, setInfoTopic] = useState<string | null>(null);
   const [campus, setCampus] = useState("Heritage Christian University");
   const [rsvps, setRsvps] = useState<Set<string>>(new Set());
   const [follows, setFollows] = useState<Set<string>>(new Set());
   const [joined, setJoined] = useState<Set<string>>(new Set());
   const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const openComposer = (initial: Draft | null = null) => {
+    setComposerInitial(initial);
+    setComposerOpen(true);
+  };
 
   useRevealAll([view, posts.length, tab, category, query, activePostId, composerOpen]);
 
@@ -151,6 +160,48 @@ export default function App() {
     setView("feed");
   };
 
+  /* ----- reports ----- */
+  const markReported = (id: string) =>
+    patchPost(id, (p) => ({ ...p, reported: true }));
+
+  const onReportFromDetail = (reason: string) => {
+    if (activePostId) markReported(activePostId);
+    notify(`Report received (${reason}) — moderators review within 24h`);
+  };
+
+  /* ----- notices / tags ----- */
+  const onShareNotice = (id: string) => {
+    try {
+      void navigator.clipboard?.writeText(`https://campusvoice.app/notice/${id}`);
+    } catch { /* clipboard unavailable */ }
+    notify("Official notice link copied to clipboard");
+  };
+
+  const onTag = (tag: string) => {
+    setQuery(tag);
+    setCategory("All");
+    setTab("For You");
+    setView("feed");
+    setActivePostId(null);
+  };
+
+  /* ----- drafts ----- */
+  const onSaveDraft = (d: Draft) =>
+    setDrafts((ds) => {
+      const exists = ds.some((x) => x.id === d.id);
+      return exists ? ds.map((x) => (x.id === d.id ? d : x)) : [d, ...ds];
+    });
+
+  const onEditDraft = (d: Draft) => {
+    setDrafts((ds) => ds.filter((x) => x.id !== d.id));
+    openComposer(d);
+  };
+
+  const onDeleteDraft = (id: string) => {
+    setDrafts((ds) => ds.filter((x) => x.id !== id));
+    notify("Draft deleted");
+  };
+
   const activePost = activePostId ? posts.find((p) => p.id === activePostId) ?? null : null;
 
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
@@ -160,7 +211,7 @@ export default function App() {
     <div className="min-h-screen">
       <TopBar
         onNav={setView}
-        onWrite={() => setComposerOpen(true)}
+        onWrite={() => openComposer()}
         query={query}
         onQuery={setQuery}
         campus={campus}
@@ -168,7 +219,7 @@ export default function App() {
         notify={notify}
       />
       <Ticker />
-      <MobileNav view={view} onNav={setView} onWrite={() => setComposerOpen(true)} />
+      <MobileNav view={view} onNav={setView} onWrite={() => openComposer()} />
 
       <div
         className={`mx-auto grid max-w-[1440px] gap-7 px-4 py-6 lg:px-6 ${
@@ -177,7 +228,7 @@ export default function App() {
             : "lg:grid-cols-[240px_minmax(0,1fr)]"
         }`}
       >
-        <Sidebar view={view} onNav={setView} onWrite={() => setComposerOpen(true)} />
+        <Sidebar view={view} onNav={setView} onWrite={() => openComposer()} />
 
         <main className="min-w-0">
           {view === "feed" && (
@@ -224,14 +275,20 @@ export default function App() {
               onSave={onSave}
               onShare={onShare}
               onVote={onVote}
+              onReport={setReportFor}
+              onTag={onTag}
+              onShareNotice={onShareNotice}
+              onWrite={() => openComposer()}
             />
           )}
           {view === "discover" && (
-            <DiscoverView follows={follows} onFollow={onFollow} joined={joined} onJoin={onJoin} notify={notify} />
+            <DiscoverView follows={follows} onFollow={onFollow} joined={joined} onJoin={onJoin} notify={notify} onShareNotice={onShareNotice} />
           )}
-          {view === "events" && <EventsView rsvps={rsvps} onRsvp={onRsvp} notify={notify} />}
+          {view === "events" && <EventsView rsvps={rsvps} onRsvp={onRsvp} notify={notify} campus={campus} />}
           {view === "market" && <MarketView notify={notify} />}
-          {view === "studio" && <StudioView notify={notify} />}
+          {view === "studio" && (
+            <StudioView notify={notify} drafts={drafts} onEditDraft={onEditDraft} onDeleteDraft={onDeleteDraft} />
+          )}
         </main>
 
         {view === "feed" && (

@@ -3,13 +3,14 @@ import { AnnouncementCard } from "./FeedCard";
 import { BadgeCheck, Compass, Trophy, Users } from "./icons";
 
 export function DiscoverView({
-  follows, onFollow, joined, onJoin, notify,
+  follows, onFollow, joined, onJoin, notify, onShareNotice,
 }: {
   follows: Set<string>;
   onFollow: (id: string) => void;
   joined: Set<string>;
   onJoin: (id: string) => void;
   notify: (msg: string) => void;
+  onShareNotice: (id: string) => void;
 }) {
   return (
     <div className="space-y-10">
@@ -30,7 +31,7 @@ export function DiscoverView({
         </header>
         <div className="mt-5 grid gap-5">
           {announcements.map((a) => (
-            <AnnouncementCard key={a.id} a={a} />
+            <AnnouncementCard key={a.id} a={a} onShare={() => onShareNotice(a.id)} />
           ))}
         </div>
       </section>

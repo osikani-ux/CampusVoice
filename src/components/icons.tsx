@@ -206,6 +206,20 @@ export const Send = ({ className }: IconProps) => (
   </svg>
 );
 
+export const Flag = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <path d="M5 21V4.5" />
+    <path d="M5 4.5c2.5-1.5 5-1.5 7 0s4.5 1.5 7 0V14c-2.5 1.5-5 1.5-7 0s-4.5-1.5-7 0" />
+  </svg>
+);
+
+export const TrashIcon = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <path d="M4.5 6.5h15M9.5 6V4.5h5V6M6.5 6.5l1 13h9l1-13" />
+    <path d="M10 10.5v5.5M14 10.5v5.5" />
+  </svg>
+);
+
 export const GradCap = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <path d="m12 4.5 10 4.5-10 4.5L2 9l10-4.5Z" />
