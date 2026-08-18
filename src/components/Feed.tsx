@@ -129,6 +129,7 @@ export function Feed({
               onVote={(o) => onVote(item.post.id, o)}
               onReport={() => onReport(item.post.id)}
               onTag={onTag}
+              onCategory={onCategory}
             />
           ) : (
             <AnnouncementCard key={item.a.id} a={item.a} onShare={() => onShareNotice(item.a.id)} />

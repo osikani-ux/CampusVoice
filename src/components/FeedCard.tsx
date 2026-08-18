@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CATEGORY_META, fmt } from "../data";
-import type { Announcement, Poll, Post } from "../data";
+import type { Announcement, Category, Poll, Post } from "../data";
 import { resolveImg } from "../lib/images";
 import {
   BadgeCheck, Bookmark, Bulb, Chat, Clock, Flag, Heart, MaskIcon,
@@ -127,7 +127,7 @@ export function AnnouncementCard({ a, onShare }: { a: Announcement; onShare?: ()
 /* ---------------- Post card ---------------- */
 
 export function FeedCard({
-  post, index, onOpen, onLike, onUseful, onSave, onShare, onVote, onReport, onTag,
+  post, index, onOpen, onLike, onUseful, onSave, onShare, onVote, onReport, onTag, onCategory,
 }: {
   post: Post;
   index: number;
@@ -139,6 +139,7 @@ export function FeedCard({
   onVote: (i: number) => void;
   onReport: () => void;
   onTag: (tag: string) => void;
+  onCategory: (c: Category) => void;
 }) {
   const meta = CATEGORY_META[post.category];
   const img = resolveImg(post.image);
@@ -193,12 +194,14 @@ export function FeedCard({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className="hidden rounded-md border-2 border-ink/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider sm:inline-block"
+            <button
+              onClick={() => onCategory(post.category)}
+              title={`See more ${post.category}`}
+              className="hidden rounded-md border-2 border-ink/15 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all hover:-translate-y-0.5 hover:border-ink hover:shadow-block-sm sm:inline-block"
               style={{ backgroundColor: meta.soft, color: meta.color }}
             >
               {post.category}
-            </span>
+            </button>
             <button
               onClick={onSave}
               className={`grid h-8 w-8 place-items-center rounded-lg border-2 transition-all hover:-translate-y-0.5 ${

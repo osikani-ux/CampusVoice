@@ -3,15 +3,17 @@ import { events, fmt, pulsePoll as initialPulse, trendingTopics, writers } from 
 import type { Poll } from "../data";
 import { BadgeCheck, Calendar, Flame, Spark } from "./icons";
 import { PollBlock } from "./FeedCard";
+import type { View } from "./Shell";
 
 export function RightRail({
-  rsvps, onRsvp, follows, onFollow, onTopic, notify,
+  rsvps, onRsvp, follows, onFollow, onTopic, onNav, notify,
 }: {
   rsvps: Set<string>;
   onRsvp: (id: string) => void;
   follows: Set<string>;
   onFollow: (id: string) => void;
   onTopic: (tag: string) => void;
+  onNav: (v: View) => void;
   notify: (msg: string) => void;
 }) {
   const [pulse, setPulse] = useState<Poll>(initialPulse);
@@ -63,7 +65,7 @@ export function RightRail({
           {events.slice(0, 3).map((e) => {
             const going = rsvps.has(e.id);
             return (
-              <li key={e.id} className="flex items-center gap-3 border-b border-line/70 px-4 py-3 transition-colors last:border-0 hover:bg-gold/10">
+              <li key={e.id} className="flex items-center gap-3 border-b border-line/70 px-4 py-3 transition-colors hover:bg-gold/10">
                 <span
                   className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border-2 border-ink text-center leading-none text-paper"
                   style={{ backgroundColor: e.color }}
@@ -73,12 +75,16 @@ export function RightRail({
                     <span className="block font-mono text-[8px] font-bold tracking-widest">{e.month}</span>
                   </span>
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-bold">{e.title}</span>
+                <button
+                  onClick={() => onNav("events")}
+                  className="min-w-0 flex-1 text-left"
+                  title="Open events"
+                >
+                  <span className="block truncate text-sm font-bold transition-colors hover:text-pine hover:underline">{e.title}</span>
                   <span className="block font-mono text-[10px] text-ink-soft">
                     {e.venue} · {fmt(e.going + (going ? 1 : 0))} going
                   </span>
-                </span>
+                </button>
                 <button
                   onClick={() => onRsvp(e.id)}
                   className={`shrink-0 rounded-md border-2 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wide transition-all hover:-translate-y-0.5 active:translate-y-0 ${
@@ -91,6 +97,12 @@ export function RightRail({
             );
           })}
         </ul>
+        <button
+          onClick={() => onNav("events")}
+          className="block w-full border-t-2 border-line px-4 py-2.5 text-left font-mono text-[10px] font-bold uppercase tracking-wider text-pine transition-colors hover:bg-gold/15"
+        >
+          See full calendar →
+        </button>
       </section>
 
       {/* Trending topics */}
@@ -153,6 +165,12 @@ export function RightRail({
             );
           })}
         </ul>
+        <button
+          onClick={() => onNav("discover")}
+          className="block w-full border-t-2 border-line px-4 py-2.5 text-left font-mono text-[10px] font-bold uppercase tracking-wider text-pine transition-colors hover:bg-gold/15"
+        >
+          Browse all voices →
+        </button>
       </section>
 
       <p className="px-2 text-center font-mono text-[10px] leading-relaxed text-ink-soft">

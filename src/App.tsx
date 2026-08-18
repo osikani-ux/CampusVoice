@@ -223,6 +223,18 @@ export default function App() {
     setActivePostId(null);
   };
 
+  /* ----- campus wire ticker: route each headline somewhere real ----- */
+  const onTickerItem = (text: string) => {
+    const t = text.toLowerCase();
+    if (t.includes("freshers") || t.includes("inter-hall") || t.includes("career fair")) {
+      setView("events");
+      notify("Showing you the campus events board");
+    } else {
+      setView("discover");
+      notify("Full notice is on the campus wire");
+    }
+  };
+
   /* ----- drafts ----- */
   const onSaveDraft = (d: Draft) => {
     setDrafts((ds) => {
@@ -284,7 +296,7 @@ export default function App() {
         me={me}
         onLogout={onLogout}
       />
-      <Ticker />
+      <Ticker onItem={onTickerItem} />
       <MobileNav view={view} onNav={setView} onWrite={() => openComposer()} />
 
       <div
@@ -338,7 +350,11 @@ export default function App() {
               tab={tab}
               onTab={setTab}
               category={category}
-              onCategory={setCategory}
+              onCategory={(c) => {
+                setQuery("");
+                setTab("For You");
+                setCategory(c);
+              }}
               query={query}
               onClearQuery={() => setQuery("")}
               onOpen={setActivePostId}
@@ -377,6 +393,7 @@ export default function App() {
             follows={follows}
             onFollow={onFollow}
             onTopic={onTopic}
+            onNav={setView}
             notify={notify}
           />
         )}

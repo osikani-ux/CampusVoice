@@ -151,20 +151,32 @@ export function TopBar({
                   </button>
                 </div>
                 <ul className="max-h-80 overflow-y-auto thin-scroll">
-                  {notifs.map((n) => (
-                    <li key={n.id} className="border-b border-line/70">
-                      <button
-                        onClick={() => setNotifs((ns) => ns.map((x) => (x.id === n.id ? { ...x, unread: false } : x)))}
-                        className="flex w-full gap-3 px-4 py-3 text-left text-sm leading-snug transition-colors hover:bg-gold/10"
-                      >
-                        <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.unread ? "bg-gold" : "bg-line"}`} />
-                        <span className="flex-1">
-                          {n.text}
-                          <span className="ml-2 font-mono text-[10px] text-ink-soft">{n.time}</span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+                  {notifs.map((n) => {
+                    const dest: View =
+                      n.kind === "announce" ? "discover" : n.kind === "event" ? "events" : "feed";
+                    return (
+                      <li key={n.id} className="border-b border-line/70">
+                        <button
+                          onClick={() => {
+                            setNotifs((ns) => ns.map((x) => (x.id === n.id ? { ...x, unread: false } : x)));
+                            setBellOpen(false);
+                            onNav(dest);
+                          }}
+                          className="group flex w-full gap-3 px-4 py-3 text-left text-sm leading-snug transition-colors hover:bg-gold/10"
+                          title={`Open ${dest === "feed" ? "your feed" : dest}`}
+                        >
+                          <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${n.unread ? "bg-gold" : "bg-line"}`} />
+                          <span className="flex-1">
+                            {n.text}
+                            <span className="ml-2 font-mono text-[10px] text-ink-soft">{n.time}</span>
+                          </span>
+                          <span className="self-center font-mono text-[9px] font-bold uppercase tracking-wider text-pine opacity-0 transition-opacity group-hover:opacity-100">
+                            open →
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </>
@@ -236,7 +248,7 @@ export function TopBar({
 
 /* ---------------- Campus wire ticker ---------------- */
 
-export function Ticker() {
+export function Ticker({ onItem }: { onItem: (text: string) => void }) {
   const items = [...tickerItems, ...tickerItems];
   return (
     <div className="ticker flex items-stretch overflow-hidden border-b-2 border-ink bg-ink text-paper">
@@ -247,10 +259,15 @@ export function Ticker() {
       <div className="relative flex-1 overflow-hidden">
         <div className="ticker-track items-center gap-8 py-1.5 pl-8">
           {items.map((t, i) => (
-            <span key={i} className="flex shrink-0 items-center gap-8 font-mono text-[11px] uppercase tracking-wider text-paper/90">
-              {t}
+            <button
+              key={i}
+              onClick={() => onItem(t)}
+              className="flex shrink-0 items-center gap-8 font-mono text-[11px] uppercase tracking-wider text-paper/90 transition-colors hover:text-gold"
+              title="Jump to this story"
+            >
+              <span className="underline decoration-gold/0 decoration-2 underline-offset-4 transition-all hover:decoration-gold">{t}</span>
               <svg className="h-3 w-3 text-gold" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2z" /></svg>
-            </span>
+            </button>
           ))}
         </div>
       </div>
