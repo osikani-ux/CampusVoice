@@ -104,7 +104,7 @@ export function StudioView({
         <Stat label="Engagement" value={7821} delay={180} />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="mt-6">
         {/* Chart */}
         <section className="reveal overflow-hidden rounded-xl border-2 border-ink bg-card shadow-block-sm">
           <header className="flex items-center justify-between border-b-2 border-ink bg-paper px-5 py-3">
@@ -145,40 +145,6 @@ export function StudioView({
             <div className="mt-2 flex justify-between font-mono text-[9px] uppercase tracking-wider text-ink-soft">
               <span>Jun</span><span>Jul</span><span>Aug</span><span>Sep — now</span>
             </div>
-          </div>
-        </section>
-
-        {/* Earnings */}
-        <section className="reveal overflow-hidden rounded-xl border-2 border-ink bg-ink text-paper shadow-block" style={{ transitionDelay: "80ms" }}>
-          <header className="border-b-2 border-paper/15 px-5 py-3">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-gold">
-              Estimated earnings
-            </p>
-          </header>
-          <div className="p-5">
-            <p className="font-display text-4xl font-extrabold tracking-tight">
-              GHS 482<span className="text-2xl">.50</span>
-              <span className="ml-2 align-middle font-mono text-[10px] font-semibold uppercase tracking-wider text-paper/60">this month</span>
-            </p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg border-2 border-paper/15 bg-paper/5 p-3">
-                <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-paper/60">Available</p>
-                <p className="mt-0.5 font-display text-xl font-extrabold text-gold">GHS 312.00</p>
-              </div>
-              <div className="rounded-lg border-2 border-paper/15 bg-paper/5 p-3">
-                <p className="font-mono text-[9px] font-bold uppercase tracking-widest text-paper/60">Pending</p>
-                <p className="mt-0.5 font-display text-xl font-extrabold">GHS 170.50</p>
-              </div>
-            </div>
-            <button
-              onClick={() => notify("Withdrawal to Mobile Money queued — arrives in ~10 min")}
-              className="mt-4 w-full rounded-lg border-2 border-gold bg-gold px-4 py-2.5 font-display text-sm font-bold text-ink transition-all hover:-translate-y-0.5 hover:shadow-block-gold active:translate-y-0"
-            >
-              Withdraw to MoMo
-            </button>
-            <p className="mt-2 text-center font-mono text-[9px] uppercase tracking-wider text-paper/50">
-              Paid from reader support + sponsored placements
-            </p>
           </div>
         </section>
       </div>
