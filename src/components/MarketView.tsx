@@ -3,7 +3,7 @@ import { COVER_COLORS, MARKET_TAGS, fmtGHS, services } from "../data";
 import type { Listing, Service, Writer } from "../data";
 import { resolveImg } from "../lib/images";
 import { ModalShell } from "./Modals";
-import { Chat, Check, CloseIcon, MapPin, Pen, Send, Star, Store, TrashIcon } from "./icons";
+import { Camera, Chat, Check, CloseIcon, MapPin, Pen, Send, Star, Store, TrashIcon } from "./icons";
 
 interface Msg {
   from: "me" | "seller";
@@ -367,6 +367,34 @@ export function MarketView({
 const inputCls =
   "w-full rounded-lg border-2 border-ink bg-card px-3.5 py-2.5 text-sm placeholder:text-ink-soft/50 focus:bg-white focus:shadow-block-sm";
 
+/** Read a file into a data URL. */
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Could not read the file"));
+    reader.readAsDataURL(file);
+  });
+
+/** Downscale a data-URL image so previews & the feed stay light. */
+const downscale = (dataUrl: string, maxW = 1000): Promise<string> =>
+  new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxW / img.width);
+      if (scale >= 1) return resolve(dataUrl);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(dataUrl);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.82));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+
 function SellModal({
   me, onClose, onSell,
 }: {
@@ -381,10 +409,40 @@ function SellModal({
   const [desc, setDesc] = useState("");
   const [color, setColor] = useState(COVER_COLORS[0]);
   const [error, setError] = useState("");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [photoErr, setPhotoErr] = useState("");
+  const [reading, setReading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const big = (title.trim().split(/\s+/)[0] || "ITEM").toUpperCase().slice(0, 6);
   const priceNum = Number(price);
   const valid = title.trim().length >= 4 && Number.isFinite(priceNum) && priceNum >= 1 && location.trim().length >= 2;
+
+  const processFile = async (file: File | undefined | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPhotoErr("That isn't an image — JPG, PNG or WebP work best.");
+      return;
+    }
+    setPhotoErr("");
+    setReading(true);
+    try {
+      const raw = await fileToDataUrl(file);
+      setPhoto(await downscale(raw));
+    } catch {
+      setPhotoErr("Couldn't read that image. Try another one.");
+    } finally {
+      setReading(false);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const file = Array.from(e.clipboardData.items)
+      .map((i) => i.getAsFile())
+      .find(Boolean);
+    if (file) void processFile(file);
+  };
 
   const submit = () => {
     if (title.trim().length < 4) { setError("Give your item a name (4+ characters)."); return; }
@@ -400,6 +458,7 @@ function SellModal({
       cover: { bg: color, big },
       tag,
       desc: desc.trim() || undefined,
+      image: photo ?? undefined,
       mine: true,
     });
   };
@@ -450,8 +509,68 @@ function SellModal({
             />
           </label>
 
+          {/* Item photo */}
           <div>
-            <span className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">Cover colour</span>
+            <span className="mb-1.5 flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+              <Camera className="h-3.5 w-3.5 text-pine" /> Item photo
+              <span className="normal-case tracking-normal text-ink-soft/70">— sells 3× faster</span>
+            </span>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { void processFile(e.target.files?.[0]); e.target.value = ""; }}
+            />
+            {photo ? (
+              <div className="relative overflow-hidden rounded-lg border-2 border-ink">
+                <img src={photo} alt="Item preview" className="aspect-[4/3] w-full object-cover" />
+                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-ink/80 px-3 py-2">
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    className="rounded-md border-2 border-paper/40 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-paper transition-colors hover:border-gold hover:text-gold"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    onClick={() => { setPhoto(null); setPhotoErr(""); }}
+                    className="flex items-center gap-1 rounded-md border-2 border-rasp/70 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-rasp transition-colors hover:bg-rasp hover:text-white"
+                  >
+                    <TrashIcon className="h-3 w-3" /> Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); void processFile(e.dataTransfer.files?.[0]); }}
+                onPaste={handlePaste}
+                className={`flex w-full flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-all ${
+                  dragOver
+                    ? "border-pine bg-pine/10 shadow-block-sm"
+                    : "border-ink/40 bg-card/60 hover:border-ink hover:bg-card"
+                }`}
+              >
+                <span className={`grid h-11 w-11 place-items-center rounded-lg border-2 border-ink transition-all ${dragOver ? "bg-gold" : "bg-paper"}`}>
+                  <Camera className="h-5 w-5" />
+                </span>
+                <span className="font-display text-sm font-bold">
+                  {reading ? "Reading photo…" : dragOver ? "Drop it here" : "Add a photo of your item"}
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+                  Click to browse · drag & drop · or paste (⌘V)
+                </span>
+              </button>
+            )}
+            {photoErr && <p className="mt-1.5 text-xs font-semibold text-rasp">{photoErr}</p>}
+          </div>
+
+          <div>
+            <span className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+              Cover colour <span className="normal-case tracking-normal text-ink-soft/70">{photo ? "(photo will be shown instead)" : "(used when there's no photo)"}</span>
+            </span>
             <div className="flex gap-2">
               {COVER_COLORS.map((c) => (
                 <button
@@ -512,14 +631,23 @@ function SellModal({
             <span className="ml-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-moss align-middle" />
           </p>
           <article className="overflow-hidden rounded-xl border-2 border-ink bg-card shadow-block-sm">
-            <div className="relative flex aspect-[4/3] items-center justify-center" style={{ backgroundColor: color }}>
-              <div
-                className="pointer-events-none absolute inset-0 opacity-[0.15]"
-                style={{ backgroundImage: "radial-gradient(var(--color-paper) 1.3px, transparent 1.3px)", backgroundSize: "15px 15px" }}
-              />
-              <span className="font-display text-4xl font-extrabold text-paper drop-shadow-[3px_3px_0_rgba(16,34,26,0.5)]">
-                {big}
-              </span>
+            <div
+              className="relative flex aspect-[4/3] items-center justify-center overflow-hidden"
+              style={photo ? undefined : { backgroundColor: color }}
+            >
+              {photo ? (
+                <img src={photo} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              ) : (
+                <>
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-[0.15]"
+                    style={{ backgroundImage: "radial-gradient(var(--color-paper) 1.3px, transparent 1.3px)", backgroundSize: "15px 15px" }}
+                  />
+                  <span className="font-display text-4xl font-extrabold text-paper drop-shadow-[3px_3px_0_rgba(16,34,26,0.5)]">
+                    {big}
+                  </span>
+                </>
+              )}
               <span className="absolute left-3 top-3 rotate-[-3deg] rounded-md border-2 border-ink bg-gold px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
                 {tag}
               </span>

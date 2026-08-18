@@ -26,6 +26,13 @@ export const HomeIcon = ({ className }: IconProps) => (
   </svg>
 );
 
+export const Camera = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <path d="M4 8h2l1.5-2h9L18 8h2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z" />
+    <circle cx="12" cy="13.5" r="3.5" />
+  </svg>
+);
+
 export const Compass = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <circle cx="12" cy="12" r="9" />
