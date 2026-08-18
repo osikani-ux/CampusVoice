@@ -31,9 +31,8 @@ function Stat({ label, value, suffix, delay }: { label: string; value: number; s
 }
 
 export function StudioView({
-  notify, drafts, onEditDraft, onDeleteDraft, me, school,
+  drafts, onEditDraft, onDeleteDraft, me, school,
 }: {
-  notify: (msg: string) => void;
   drafts: Draft[];
   onEditDraft: (d: Draft) => void;
   onDeleteDraft: (id: string) => void;
@@ -214,8 +213,8 @@ export function StudioView({
         </section>
       )}
 
-      {/* Engagement + premium */}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      {/* Engagement */}
+      <div className="mt-6 grid gap-6">
         <section className="reveal rounded-xl border-2 border-ink bg-card p-5 shadow-block-sm" style={{ transitionDelay: "140ms" }}>
           <p className="font-display text-base font-extrabold">What readers did with your stories</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -244,45 +243,6 @@ export function StudioView({
           <p className="mt-4 text-sm leading-relaxed text-ink-soft">
             Your GHS 200 business story is your most-shared article ever. Readers love real numbers — consider a monthly update series.
           </p>
-        </section>
-
-        <section className="reveal relative overflow-hidden rounded-xl border-2 border-ink bg-gold p-5 shadow-block" style={{ transitionDelay: "160ms" }}>
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.12]"
-            style={{ backgroundImage: "radial-gradient(var(--color-ink) 1.2px, transparent 1.2px)", backgroundSize: "14px 14px" }}
-          />
-          <div className="relative">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink/70">
-              CampusVoice Premium
-            </p>
-            <p className="mt-1 font-display text-2xl font-extrabold leading-tight">
-              Unlock the full creator toolkit
-            </p>
-            <ul className="mt-3 space-y-1.5 text-sm font-semibold">
-              {["Advanced analytics & audience insights", "Featured placement on My Campus", "Monthly newsletter to your followers", "Priority monetization reviews"].map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <svg className="mt-0.5 h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <button
-              onClick={() => {
-                if (!premium) {
-                  setPremium(true);
-                  notify("Premium trial started — 30 days free, cancel anytime");
-                }
-              }}
-              disabled={premium}
-              className={`mt-4 w-full rounded-lg border-2 px-4 py-2.5 font-display text-sm font-bold transition-all active:translate-y-0 ${
-                premium
-                  ? "cursor-default border-paper/40 bg-ink/20 text-ink"
-                  : "border-ink bg-ink text-gold hover:-translate-y-0.5 hover:shadow-block"
-              }`}
-            >
-              {premium ? "✓ Premium trial active" : "Try 30 days free · then GHS 15/mo"}
-            </button>
-          </div>
         </section>
       </div>
     </div>
