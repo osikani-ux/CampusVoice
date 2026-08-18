@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { CATEGORY_META, currentUser, fmt } from "../data";
-import type { Post } from "../data";
+import { CATEGORY_META, fmt } from "../data";
+import type { Post, Writer } from "../data";
 import { resolveImg } from "../lib/images";
 import { PollBlock } from "./FeedCard";
 import { ReportModal } from "./Modals";
@@ -10,7 +10,7 @@ import {
 } from "./icons";
 
 export function PostDetail({
-  post, onClose, onLike, onUseful, onSave, onShare, onVote, onComment, onFollow, followed, onReport,
+  post, onClose, onLike, onUseful, onSave, onShare, onVote, onComment, onFollow, followed, onReport, onTag, me,
 }: {
   post: Post;
   onClose: () => void;
@@ -24,12 +24,13 @@ export function PostDetail({
   followed: boolean;
   onReport: (reason: string, details: string) => void;
   onTag: (tag: string) => void;
+  me: Writer;
 }) {
   const [draft, setDraft] = useState("");
   const [reportOpen, setReportOpen] = useState(false);
   const meta = CATEGORY_META[post.category];
   const img = resolveImg(post.image);
-  const own = post.author.id === currentUser.id && !post.anonymous;
+  const own = post.author.id === me.id && !post.anonymous;
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -210,8 +211,11 @@ export function PostDetail({
             </h2>
 
             <div className="mt-4 flex gap-3">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 border-ink bg-pine font-display text-xs font-extrabold text-paper">
-                YM
+              <span
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-2 border-ink font-display text-xs font-extrabold text-paper"
+                style={{ backgroundColor: me.color }}
+              >
+                {me.initials}
               </span>
               <div className="flex flex-1 gap-2">
                 <input

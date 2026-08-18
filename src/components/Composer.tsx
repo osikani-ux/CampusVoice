@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { CATEGORIES, CATEGORY_META, currentUser } from "../data";
-import type { Category, Draft, Post } from "../data";
+import { CATEGORIES, CATEGORY_META } from "../data";
+import type { Category, Draft, Post, Writer } from "../data";
 import { CloseIcon, GradCap, MaskIcon, Pen, Spark } from "./icons";
 
 /* ---------- tiny toolbar glyphs ---------- */
@@ -76,13 +76,14 @@ const Divider = () => <span className="mx-1 h-6 w-0.5 shrink-0 rounded bg-line" 
 const stripTags = (html: string): string => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
 export function Composer({
-  onClose, onPublish, onSaveDraft, notify, initial,
+  onClose, onPublish, onSaveDraft, notify, initial, author,
 }: {
   onClose: () => void;
   onPublish: (p: Post) => void;
   onSaveDraft: (d: Draft) => void;
   notify: (msg: string) => void;
   initial?: Draft | null;
+  author: Writer;
 }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [category, setCategory] = useState<Category>(initial?.category ?? "Campus Life");
@@ -167,7 +168,7 @@ export function Composer({
       title: title.trim(),
       excerpt: `${first.slice(0, 170)}${first.length > 170 ? "…" : ""}`,
       body: paragraphs,
-      author: currentUser,
+      author,
       anonymous,
       category,
       time: "now",
@@ -358,7 +359,7 @@ export function Composer({
                 <MaskIcon className="h-3.5 w-3.5" /> Anonymous story
               </p>
               <p className={`mt-1 text-sm font-bold ${anonymous ? "" : "text-ink"}`}>
-                {anonymous ? "On — your identity stays hidden" : "Off — publishing as Yaw Mensah"}
+                {anonymous ? "On — your identity stays hidden" : `Off — publishing as ${author.name}`}
               </p>
             </button>
           </div>

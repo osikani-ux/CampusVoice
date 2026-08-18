@@ -6,6 +6,57 @@ export type Category =
   | "Technology"
   | "Relationships";
 
+/* ---------------- Accounts ---------------- */
+
+export interface User {
+  name: string;
+  email: string;
+  school: string;
+  level: string;
+  course: string;
+  verified: boolean;
+}
+
+export const CAMPUSES = [
+  "Heritage Christian University",
+  "KNUST — Kumasi",
+  "University of Ghana, Legon",
+  "University of Cape Coast",
+];
+
+export const LEVELS = ["Level 100", "Level 200", "Level 300", "Level 400", "Graduate"];
+
+export const COURSE_SUGGESTIONS = [
+  "Computer Science", "Nursing", "Business Administration", "Law",
+  "Theatre Arts", "Computer Engineering", "Economics", "Biochemistry",
+  "Political Science", "Architecture", "Accounting", "Agriculture",
+];
+
+export const initialsOf = (name: string): string =>
+  name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("") || "?";
+
+const AVATAR_COLORS = ["#14603f", "#d93a5b", "#b07c00", "#0e7c7b", "#2456a6", "#a34a8c"];
+
+export const colorFor = (seed: string): string => {
+  let h = 0;
+  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+};
+
+export const toWriter = (u: User): Writer => ({
+  id: `u-${u.email.toLowerCase()}`,
+  name: u.name,
+  level: u.level,
+  dept: u.course,
+  initials: initialsOf(u.name),
+  color: colorFor(u.name + u.email),
+  followers: 12,
+  articles: 0,
+  verified: u.verified,
+  badges: u.verified ? ["Verified Student"] : [],
+  bio: `${u.course} · ${u.school}`,
+});
+
 export const CATEGORIES: Category[] = [
   "Academics",
   "Campus Life",

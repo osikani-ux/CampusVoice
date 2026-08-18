@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { currentUser, fmt } from "../data";
-import type { Draft } from "../data";
+import { fmt } from "../data";
+import type { Draft, Writer } from "../data";
 import { useCountUp } from "../lib/hooks";
 import {
   BadgeCheck, Bulb, Chat, Flame, GradCap, Pen, Spark, Studio, TrashIcon, Trophy,
@@ -31,12 +31,14 @@ function Stat({ label, value, suffix, delay }: { label: string; value: number; s
 }
 
 export function StudioView({
-  notify, drafts, onEditDraft, onDeleteDraft,
+  notify, drafts, onEditDraft, onDeleteDraft, me, school,
 }: {
   notify: (msg: string) => void;
   drafts: Draft[];
   onEditDraft: (d: Draft) => void;
   onDeleteDraft: (id: string) => void;
+  me: Writer;
+  school: string;
 }) {
   const [mounted, setMounted] = useState(false);
   const [premium, setPremium] = useState(false);
@@ -62,23 +64,26 @@ export function StudioView({
         </span>
         <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex items-center gap-4">
-            <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border-2 border-paper/30 bg-gold font-display text-2xl font-extrabold text-ink shadow-block-gold">
-              {currentUser.initials}
+            <span
+              className="grid h-20 w-20 shrink-0 place-items-center rounded-xl border-2 border-paper/30 font-display text-2xl font-extrabold text-paper shadow-block-gold"
+              style={{ backgroundColor: me.color }}
+            >
+              {me.initials}
             </span>
             <div>
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-gold">
                 Welcome back
               </p>
               <h1 className="mt-0.5 flex items-center gap-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-                {currentUser.name} <BadgeCheck className="h-6 w-6 text-gold" />
+                {me.name} {me.verified && <BadgeCheck className="h-6 w-6 text-gold" />}
               </h1>
               <p className="mt-1 font-mono text-[11px] text-paper/80">
-                {currentUser.level} · {currentUser.dept} · Heritage Christian University
+                {me.level} · {me.dept} · {school}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-1.5">
-            {currentUser.badges.map((b, i) => (
+            {me.badges.map((b, i) => (
               <span
                 key={b}
                 className="flex items-center gap-1 rounded-md border-2 border-paper/25 bg-ink/30 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wide text-paper"
@@ -94,8 +99,8 @@ export function StudioView({
       {/* Stats */}
       <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Total views" value={18420} delay={0} />
-        <Stat label="Followers" value={currentUser.followers} delay={60} />
-        <Stat label="Articles" value={currentUser.articles} delay={120} />
+        <Stat label="Followers" value={me.followers} delay={60} />
+        <Stat label="Articles" value={me.articles} delay={120} />
         <Stat label="Engagement" value={7821} delay={180} />
       </div>
 

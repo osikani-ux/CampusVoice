@@ -233,3 +233,25 @@ export const WaveHand = ({ className }: IconProps) => (
     <path d="M7.5 11.5 5 9a1.7 1.7 0 0 1 2.4-2.4l2.6 2.6V4.5a1.6 1.6 0 0 1 3.2 0V9m0-2a1.6 1.6 0 0 1 3.2 0v3.5m0-1.5a1.5 1.5 0 0 1 3 0v5c0 4-2.5 7-6.5 7-3 0-4.5-1.5-6-4L4.5 14a1.8 1.8 0 0 1 3-2l1 1" />
   </svg>
 );
+
+export const Mail = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+    <path d="m4.5 7.5 7.5 5.5 7.5-5.5" />
+  </svg>
+);
+
+export const Lock = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5" />
+    <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+    <path d="M12 14.5v2" />
+  </svg>
+);
+
+export const LogOut = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <path d="M9.5 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h3.5" />
+    <path d="M15 8l4 4-4 4M19 12H9.5" />
+  </svg>
+);

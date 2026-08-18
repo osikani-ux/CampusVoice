@@ -1,14 +1,15 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
 import {
+  CAMPUSES,
   notifications as initialNotifications,
   tickerItems,
-  currentUser,
   fmt,
 } from "../data";
+import type { Writer } from "../data";
 import {
   Megaphone, HomeIcon, Compass, Calendar, Store, Studio, Pen,
-  SearchIcon, Bell, GradCap, BadgeCheck, Trophy, Check, CloseIcon,
+  SearchIcon, Bell, GradCap, BadgeCheck, Trophy, Check, CloseIcon, LogOut,
 } from "./icons";
 
 export type View = "feed" | "discover" | "events" | "market" | "studio";
@@ -21,17 +22,10 @@ const NAV: { id: View; label: string; icon: (p: { className?: string }) => React
   { id: "studio", label: "Creator Studio", icon: Studio },
 ];
 
-const CAMPUSES = [
-  "Heritage Christian University",
-  "KNUST — Kumasi",
-  "University of Ghana, Legon",
-  "University of Cape Coast",
-];
-
 /* ---------------- Top bar ---------------- */
 
 export function TopBar({
-  onNav, onWrite, query, onQuery, campus, onCampus, notify,
+  onNav, onWrite, query, onQuery, campus, onCampus, notify, me, onLogout,
 }: {
   onNav: (v: View) => void;
   onWrite: () => void;
@@ -40,9 +34,12 @@ export function TopBar({
   campus: string;
   onCampus: (c: string) => void;
   notify: (msg: string) => void;
+  me: Writer;
+  onLogout: () => void;
 }) {
   const [campusOpen, setCampusOpen] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
   const [notifs, setNotifs] = useState(initialNotifications);
   const unread = notifs.filter((n) => n.unread).length;
 
@@ -175,21 +172,54 @@ export function TopBar({
         </div>
 
         {/* Profile */}
-        <button
-          onClick={() => onNav("studio")}
-          className="hidden items-center gap-2 rounded-lg border-2 border-ink bg-pine py-1 pl-1 pr-3 text-paper transition-all hover:-translate-y-0.5 hover:shadow-block-gold sm:flex"
-          aria-label="Open creator studio"
-        >
-          <span className="grid h-8 w-8 place-items-center rounded-md bg-gold font-display text-sm font-extrabold text-ink">
-            {currentUser.initials}
-          </span>
-          <span className="text-sm font-semibold leading-tight">
-            Yaw
-            <span className="block font-mono text-[9px] font-medium uppercase tracking-wider text-paper/70">
-              {fmt(currentUser.followers)} followers
+        <div className="relative hidden sm:block">
+          <button
+            onClick={() => setUserOpen((o) => !o)}
+            className="flex items-center gap-2 rounded-lg border-2 border-ink bg-pine py-1 pl-1 pr-3 text-paper transition-all hover:-translate-y-0.5 hover:shadow-block-gold"
+            aria-label="Open account menu"
+          >
+            <span
+              className="grid h-8 w-8 place-items-center rounded-md border-2 border-ink font-display text-sm font-extrabold text-paper"
+              style={{ backgroundColor: me.color }}
+            >
+              {me.initials}
             </span>
-          </span>
-        </button>
+            <span className="text-sm font-semibold leading-tight">
+              {me.name.split(" ")[0]}
+              <span className="block font-mono text-[9px] font-medium uppercase tracking-wider text-paper/70">
+                {fmt(me.followers)} followers
+              </span>
+            </span>
+          </button>
+          {userOpen && (
+            <>
+              <button className="fixed inset-0 z-10 cursor-default" aria-label="Close" onClick={() => setUserOpen(false)} />
+              <div className="absolute right-0 top-full z-20 mt-2 w-64 overflow-hidden rounded-xl border-2 border-ink bg-card shadow-block">
+                <div className="border-b-2 border-line bg-paper px-4 py-3">
+                  <p className="flex items-center gap-1.5 font-display text-sm font-bold">
+                    {me.name} {me.verified && <BadgeCheck className="h-4 w-4 text-cobalt" />}
+                  </p>
+                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+                    {me.level} · {me.dept}
+                  </p>
+                  <p className="mt-0.5 truncate font-mono text-[10px] text-ink-soft">{me.bio}</p>
+                </div>
+                <button
+                  onClick={() => { setUserOpen(false); onNav("studio"); }}
+                  className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-gold/15"
+                >
+                  <Studio className="h-4 w-4 text-pine" /> Creator Studio
+                </button>
+                <button
+                  onClick={() => { setUserOpen(false); onLogout(); }}
+                  className="flex w-full items-center gap-2 border-t border-line/70 px-4 py-2.5 text-left text-sm font-semibold text-rasp transition-colors hover:bg-rasp/10"
+                >
+                  <LogOut className="h-4 w-4" /> Log out
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Write */}
         <button
@@ -230,7 +260,15 @@ export function Ticker() {
 
 /* ---------------- Sidebar ---------------- */
 
-export function Sidebar({ view, onNav, onWrite }: { view: View; onNav: (v: View) => void; onWrite: () => void }) {
+export function Sidebar({
+  view, onNav, onWrite, verified, onVerify,
+}: {
+  view: View;
+  onNav: (v: View) => void;
+  onWrite: () => void;
+  verified: boolean;
+  onVerify: () => void;
+}) {
   return (
     <aside className="sticky top-20 hidden h-fit flex-col gap-5 lg:flex">
       <button
@@ -286,9 +324,18 @@ export function Sidebar({ view, onNav, onWrite }: { view: View; onNav: (v: View)
             <div className="h-full rounded-full bg-gold" style={{ width: "68%" }} />
           </div>
           <p className="mt-1.5 font-mono text-[10px] text-paper/75">680 / 1,000 pts → Top Voice</p>
-          <p className="mt-3 inline-flex rotate-[-2deg] items-center gap-1.5 rounded-md border-2 border-dashed border-gold/80 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-gold">
-            <BadgeCheck className="h-3.5 w-3.5" /> Verified student
-          </p>
+          {verified ? (
+            <p className="mt-3 inline-flex rotate-[-2deg] items-center gap-1.5 rounded-md border-2 border-dashed border-gold/80 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-gold">
+              <BadgeCheck className="h-3.5 w-3.5" /> Verified student
+            </p>
+          ) : (
+            <button
+              onClick={onVerify}
+              className="mt-3 inline-flex rotate-[-2deg] items-center gap-1.5 rounded-md border-2 border-gold bg-gold px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink transition-all hover:-translate-y-0.5 hover:shadow-block-gold active:translate-y-0"
+            >
+              <BadgeCheck className="h-3.5 w-3.5" /> Verify student ID
+            </button>
+          )}
         </div>
       </div>
     </aside>
