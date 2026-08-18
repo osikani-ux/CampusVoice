@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { CATEGORIES, CATEGORY_META } from "../data";
 import type { Category, Draft, Post, Writer } from "../data";
-import { CloseIcon, GradCap, MaskIcon, Pen, Spark } from "./icons";
+import { readImageFile } from "../lib/images";
+import { Camera, CloseIcon, GradCap, MaskIcon, Pen, Spark, TrashIcon } from "./icons";
 
 /* ---------- tiny toolbar glyphs ---------- */
 
@@ -93,6 +94,33 @@ export function Composer({
   const [active, setActive] = useState<Record<string, boolean>>({});
   const editorRef = useRef<HTMLDivElement>(null);
 
+  /* ----- cover photo ----- */
+  const [photo, setPhoto] = useState<string | null>(initial?.image ?? null);
+  const [photoErr, setPhotoErr] = useState("");
+  const [reading, setReading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const processFile = async (file: File | undefined | null) => {
+    if (!file) return;
+    setReading(true);
+    const res = await readImageFile(file);
+    setReading(false);
+    if (res.ok) {
+      setPhotoErr("");
+      setPhoto(res.dataUrl);
+    } else {
+      setPhotoErr(res.error);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const file = Array.from(e.clipboardData.items)
+      .map((i) => i.getAsFile())
+      .find(Boolean);
+    if (file) void processFile(file);
+  };
+
   useEffect(() => {
     if (initial?.bodyHtml && editorRef.current) {
       editorRef.current.innerHTML = initial.bodyHtml;
@@ -179,6 +207,7 @@ export function Composer({
       useful: 0,
       usefulMarked: false,
       saved: false,
+      image: photo ?? undefined,
       cover: { bg: CATEGORY_META[category].color, big: "NEW", sub: `JUST PUBLISHED · ${category.toUpperCase()}` },
       comments: [],
       tags: [`#${category.replace(/\s+/g, "")}`, "#HCU"],
@@ -199,6 +228,7 @@ export function Composer({
       bodyHtml,
       category,
       anonymous,
+      image: photo ?? undefined,
       updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
     });
     notify("Draft saved — find it in your Creator Studio");
@@ -241,6 +271,80 @@ export function Composer({
               maxLength={110}
             />
             <p className="mt-1 text-right font-mono text-[10px] text-ink-soft">{title.length}/110</p>
+          </div>
+
+          {/* Cover photo */}
+          <div>
+            <label className="mb-1.5 block font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+              Cover photo <span className="normal-case tracking-normal text-ink-soft/70">(optional)</span>
+            </label>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { void processFile(e.target.files?.[0]); e.target.value = ""; }}
+            />
+            {photo ? (
+              <div className="toast-in flex items-center gap-3 overflow-hidden rounded-lg border-2 border-ink bg-card p-2 shadow-block-sm">
+                <img
+                  src={photo}
+                  alt="Cover preview"
+                  className="h-20 w-28 shrink-0 rounded-md border-2 border-ink object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="font-display text-sm font-bold leading-snug">
+                    Photo attached — shown on the feed card & in the reader
+                  </p>
+                  <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+                    {reading ? "Reading photo…" : "Looks good. Swap it any time."}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    className="rounded-md border-2 border-ink bg-gold px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider transition-all hover:-translate-y-0.5 hover:shadow-block-sm active:translate-y-0"
+                  >
+                    Replace
+                  </button>
+                  <button
+                    onClick={() => { setPhoto(null); setPhotoErr(""); }}
+                    className="flex items-center justify-center gap-1 rounded-md border-2 border-rasp/70 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-rasp transition-all hover:-translate-y-0.5 hover:bg-rasp hover:text-white active:translate-y-0"
+                  >
+                    <TrashIcon className="h-3 w-3" /> Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); void processFile(e.dataTransfer.files?.[0]); }}
+                onPaste={handlePaste}
+                className={`flex w-full items-center gap-3 rounded-lg border-2 border-dashed px-4 py-3 text-left transition-all ${
+                  dragOver
+                    ? "border-pine bg-pine/10 shadow-block-sm"
+                    : "border-ink/40 bg-card/60 hover:border-ink hover:bg-card"
+                }`}
+              >
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg border-2 border-ink transition-all ${dragOver ? "bg-gold" : "bg-paper"}`}>
+                  <Camera className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-display text-sm font-bold">
+                    {reading ? "Reading photo…" : dragOver ? "Drop it here" : "Add a photo to your story"}
+                  </span>
+                  <span className="block font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+                    Click to browse · drag & drop · or paste (⌘V)
+                  </span>
+                </span>
+                <span className="hidden shrink-0 rounded-md border-2 border-ink bg-paper px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider sm:block">
+                  Browse
+                </span>
+              </button>
+            )}
+            {photoErr && <p className="mt-1.5 text-xs font-semibold text-rasp">{photoErr}</p>}
           </div>
 
           {/* Rich editor */}

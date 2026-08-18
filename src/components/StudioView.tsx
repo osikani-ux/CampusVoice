@@ -40,7 +40,6 @@ export function StudioView({
   school: string;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [premium, setPremium] = useState(false);
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(id);

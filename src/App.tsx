@@ -397,7 +397,6 @@ export default function App() {
           )}
           {view === "studio" && (
             <StudioView
-              notify={notify}
               drafts={drafts}
               onEditDraft={onEditDraft}
               onDeleteDraft={onDeleteDraft}

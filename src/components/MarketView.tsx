@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { COVER_COLORS, MARKET_TAGS, fmtGHS, services } from "../data";
 import type { Listing, Service, Writer } from "../data";
-import { resolveImg } from "../lib/images";
+import { readImageFile, resolveImg } from "../lib/images";
 import { ModalShell } from "./Modals";
 import { Camera, Chat, Check, CloseIcon, MapPin, Pen, Send, Star, Store, TrashIcon } from "./icons";
 
@@ -367,34 +367,6 @@ export function MarketView({
 const inputCls =
   "w-full rounded-lg border-2 border-ink bg-card px-3.5 py-2.5 text-sm placeholder:text-ink-soft/50 focus:bg-white focus:shadow-block-sm";
 
-/** Read a file into a data URL. */
-const fileToDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Could not read the file"));
-    reader.readAsDataURL(file);
-  });
-
-/** Downscale a data-URL image so previews & the feed stay light. */
-const downscale = (dataUrl: string, maxW = 1000): Promise<string> =>
-  new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxW / img.width);
-      if (scale >= 1) return resolve(dataUrl);
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(img.width * scale);
-      canvas.height = Math.round(img.height * scale);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return resolve(dataUrl);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", 0.82));
-    };
-    img.onerror = () => resolve(dataUrl);
-    img.src = dataUrl;
-  });
-
 function SellModal({
   me, onClose, onSell,
 }: {
@@ -421,19 +393,14 @@ function SellModal({
 
   const processFile = async (file: File | undefined | null) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setPhotoErr("That isn't an image — JPG, PNG or WebP work best.");
-      return;
-    }
-    setPhotoErr("");
     setReading(true);
-    try {
-      const raw = await fileToDataUrl(file);
-      setPhoto(await downscale(raw));
-    } catch {
-      setPhotoErr("Couldn't read that image. Try another one.");
-    } finally {
-      setReading(false);
+    const res = await readImageFile(file);
+    setReading(false);
+    if (res.ok) {
+      setPhotoErr("");
+      setPhoto(res.dataUrl);
+    } else {
+      setPhotoErr(res.error);
     }
   };
 

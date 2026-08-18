@@ -115,6 +115,7 @@ export interface Draft {
   category: Category;
   anonymous: boolean;
   updated: string;
+  image?: string;
 }
 
 export interface Post {
