@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { fmtGHS, listings, services } from "../data";
-import type { Listing, Service } from "../data";
+import { COVER_COLORS, MARKET_TAGS, fmtGHS, services } from "../data";
+import type { Listing, Service, Writer } from "../data";
 import { resolveImg } from "../lib/images";
 import { ModalShell } from "./Modals";
-import { Chat, Check, MapPin, Send, Star, Store } from "./icons";
+import { Chat, Check, CloseIcon, MapPin, Pen, Send, Star, Store, TrashIcon } from "./icons";
 
 interface Msg {
   from: "me" | "seller";
@@ -18,8 +18,17 @@ const SELLER_REPLIES = [
   "Price is slightly negotiable for fellow students.",
 ];
 
-export function MarketView({ notify }: { notify: (msg: string) => void }) {
+export function MarketView({
+  listings, me, onSell, onDelete, notify,
+}: {
+  listings: Listing[];
+  me: Writer;
+  onSell: (l: Listing) => void;
+  onDelete: (id: string) => void;
+  notify: (msg: string) => void;
+}) {
   const [tab, setTab] = useState<"listings" | "services">("listings");
+  const [sellOpen, setSellOpen] = useState(false);
 
   /* ----- chat state ----- */
   const [chatFor, setChatFor] = useState<Listing | null>(null);
@@ -85,24 +94,67 @@ export function MarketView({ notify }: { notify: (msg: string) => void }) {
             Buy, sell & hire <span className="bg-gold px-2 shadow-block-sm">on campus.</span>
           </h1>
         </div>
-        <div className="flex overflow-hidden rounded-lg border-2 border-ink bg-card shadow-block-sm">
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={() => setTab("listings")}
-            className={`px-4 py-2 font-display text-sm font-bold transition-colors ${tab === "listings" ? "bg-ink text-gold" : "hover:bg-gold/20"}`}
+            onClick={() => setSellOpen(true)}
+            className="group flex items-center gap-2 rounded-lg border-2 border-ink bg-gold px-4 py-2 font-display text-sm font-bold shadow-block-sm transition-all hover:-translate-y-0.5 hover:shadow-block active:translate-y-0 active:shadow-none"
           >
-            Listings
+            <Pen className="h-4 w-4 transition-transform group-hover:-rotate-12" />
+            Sell something
           </button>
-          <button
-            onClick={() => setTab("services")}
-            className={`px-4 py-2 font-display text-sm font-bold transition-colors ${tab === "services" ? "bg-ink text-gold" : "hover:bg-gold/20"}`}
-          >
-            Student services
-          </button>
+          <div className="flex overflow-hidden rounded-lg border-2 border-ink bg-card shadow-block-sm">
+            <button
+              onClick={() => setTab("listings")}
+              className={`px-4 py-2 font-display text-sm font-bold transition-colors ${tab === "listings" ? "bg-ink text-gold" : "hover:bg-gold/20"}`}
+            >
+              Listings ({listings.length})
+            </button>
+            <button
+              onClick={() => setTab("services")}
+              className={`px-4 py-2 font-display text-sm font-bold transition-colors ${tab === "services" ? "bg-ink text-gold" : "hover:bg-gold/20"}`}
+            >
+              Student services
+            </button>
+          </div>
         </div>
       </header>
 
       {tab === "listings" ? (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {/* The ready-to-post card — always first */}
+          <button
+            onClick={() => setSellOpen(true)}
+            className="reveal group overflow-hidden rounded-xl border-2 border-dashed border-ink/50 bg-card/60 text-left transition-all duration-200 hover:-translate-y-1 hover:border-ink hover:bg-card hover:shadow-block"
+            style={{ transitionDelay: "0ms" }}
+          >
+            <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b-2 border-dashed border-ink/40 bg-paper">
+              <div
+                className="pointer-events-none absolute inset-0 opacity-[0.35]"
+                style={{ backgroundImage: "radial-gradient(var(--color-line) 1.3px, transparent 1.3px)", backgroundSize: "15px 15px" }}
+              />
+              <span className="relative grid h-14 w-14 place-items-center rounded-xl border-2 border-ink bg-gold shadow-block-sm transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-110">
+                <Pen className="h-6 w-6" />
+              </span>
+              <span className="absolute left-3 top-3 rotate-[-3deg] rounded-md border-2 border-ink bg-ink px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-gold">
+                Your ad here
+              </span>
+            </div>
+            <div className="p-4">
+              <h2 className="font-display text-base font-extrabold leading-snug">
+                Sell something to your campus
+              </h2>
+              <p className="mt-1 font-display text-xl font-extrabold text-ink-soft/60">GHS —</p>
+              <div className="mt-2.5 flex items-center justify-between gap-2 border-t-2 border-line pt-2.5">
+                <p className="font-mono text-[11px] text-ink-soft">
+                  {me.name} · {me.level}
+                </p>
+                <span className="flex items-center gap-1.5 rounded-lg border-2 border-ink bg-gold px-3 py-1.5 text-xs font-bold transition-all group-hover:-translate-y-0.5 group-hover:shadow-block-sm">
+                  <Pen className="h-3.5 w-3.5" /> Post a listing
+                </span>
+              </div>
+            </div>
+          </button>
+
           {listings.map((l, i) => {
             const img = resolveImg(l.image);
             return (
@@ -125,24 +177,39 @@ export function MarketView({ notify }: { notify: (msg: string) => void }) {
                       </span>
                     </div>
                   )}
-                  <span className="absolute left-3 top-3 rotate-[-3deg] rounded-md border-2 border-ink bg-paper px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
+                  <span className={`absolute left-3 top-3 rotate-[-3deg] rounded-md border-2 border-ink px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${l.mine ? "bg-gold" : "bg-paper"}`}>
                     {l.tag}
                   </span>
+                  {l.mine && (
+                    <span className="absolute right-3 top-3 rotate-[3deg] rounded-md border-2 border-ink bg-pine px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-paper">
+                      Your listing
+                    </span>
+                  )}
                 </div>
                 <div className="p-4">
                   <h2 className="font-display text-base font-extrabold leading-snug">{l.title}</h2>
+                  {l.desc && <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">{l.desc}</p>}
                   <p className="mt-1 font-display text-xl font-extrabold text-pine">{fmtGHS(l.price)}</p>
                   <div className="mt-2.5 flex items-center justify-between gap-2 border-t-2 border-line pt-2.5">
                     <p className="font-mono text-[11px] leading-tight text-ink-soft">
                       {l.seller} · {l.level}
                       <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{l.location}</span>
                     </p>
-                    <button
-                      onClick={() => openChat(l)}
-                      className="flex shrink-0 items-center gap-1.5 rounded-lg border-2 border-ink bg-gold px-3 py-1.5 text-xs font-bold transition-all hover:-translate-y-0.5 hover:shadow-block-sm active:translate-y-0"
-                    >
-                      <Chat className="h-3.5 w-3.5" /> Message
-                    </button>
+                    {l.mine ? (
+                      <button
+                        onClick={() => onDelete(l.id)}
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg border-2 border-rasp/60 bg-rasp/10 px-3 py-1.5 text-xs font-bold text-rasp transition-all hover:-translate-y-0.5 hover:border-rasp hover:bg-rasp hover:text-white active:translate-y-0"
+                      >
+                        <TrashIcon className="h-3.5 w-3.5" /> Take down
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => openChat(l)}
+                        className="flex shrink-0 items-center gap-1.5 rounded-lg border-2 border-ink bg-gold px-3 py-1.5 text-xs font-bold transition-all hover:-translate-y-0.5 hover:shadow-block-sm active:translate-y-0"
+                      >
+                        <Chat className="h-3.5 w-3.5" /> Message
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
@@ -196,8 +263,14 @@ export function MarketView({ notify }: { notify: (msg: string) => void }) {
       )}
 
       <p className="mt-6 rounded-xl border-2 border-dashed border-ink/35 bg-card/70 px-4 py-3 text-center font-mono text-[11px] uppercase tracking-wider text-ink-soft">
-        Selling something? Post a listing from the Write button — pick Marketplace as your format.
+        {listings.filter((l) => l.mine).length > 0
+          ? `You have ${listings.filter((l) => l.mine).length} live listing${listings.filter((l) => l.mine).length > 1 ? "s" : ""} — buyers will message you here`
+          : "Fees, food, data bundles — one sold item covers a lot. Post your first listing above."}
       </p>
+
+      {sellOpen && (
+        <SellModal me={me} onClose={() => setSellOpen(false)} onSell={(l) => { setSellOpen(false); onSell(l); }} />
+      )}
 
       {/* Chat modal */}
       {chatFor && (
@@ -286,5 +359,195 @@ export function MarketView({ notify }: { notify: (msg: string) => void }) {
         </ModalShell>
       )}
     </div>
+  );
+}
+
+/* ---------------- Sell / post-a-listing modal ---------------- */
+
+const inputCls =
+  "w-full rounded-lg border-2 border-ink bg-card px-3.5 py-2.5 text-sm placeholder:text-ink-soft/50 focus:bg-white focus:shadow-block-sm";
+
+function SellModal({
+  me, onClose, onSell,
+}: {
+  me: Writer;
+  onClose: () => void;
+  onSell: (l: Listing) => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [tag, setTag] = useState(MARKET_TAGS[0]);
+  const [location, setLocation] = useState("");
+  const [desc, setDesc] = useState("");
+  const [color, setColor] = useState(COVER_COLORS[0]);
+  const [error, setError] = useState("");
+
+  const big = (title.trim().split(/\s+/)[0] || "ITEM").toUpperCase().slice(0, 6);
+  const priceNum = Number(price);
+  const valid = title.trim().length >= 4 && Number.isFinite(priceNum) && priceNum >= 1 && location.trim().length >= 2;
+
+  const submit = () => {
+    if (title.trim().length < 4) { setError("Give your item a name (4+ characters)."); return; }
+    if (!Number.isFinite(priceNum) || priceNum < 1) { setError("Set a price in GHS — buyers need a number."); return; }
+    if (location.trim().length < 2) { setError("Where should buyers meet you? (e.g. Hall 3)"); return; }
+    onSell({
+      id: `m${Date.now()}`,
+      title: title.trim(),
+      price: Math.round(priceNum),
+      seller: me.name.split(" ")[0],
+      level: me.level,
+      location: location.trim(),
+      cover: { bg: color, big },
+      tag,
+      desc: desc.trim() || undefined,
+      mine: true,
+    });
+  };
+
+  return (
+    <ModalShell title="Post a listing" kicker="CampusVoice Marketplace" onClose={onClose} wide>
+      <div className="grid gap-5 md:grid-cols-[1fr_240px]">
+        <div className="space-y-4">
+          <label className="block">
+            <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">What are you selling?</span>
+            <input
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); setError(""); }}
+              placeholder="e.g. Samsung Galaxy A34 · barely used"
+              className={inputCls}
+              maxLength={60}
+              autoFocus
+            />
+          </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block">
+              <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">Price (GHS)</span>
+              <input
+                value={price}
+                onChange={(e) => { setPrice(e.target.value.replace(/[^\d.]/g, "")); setError(""); }}
+                placeholder="e.g. 1200"
+                inputMode="decimal"
+                className={inputCls}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">Category</span>
+              <select value={tag} onChange={(e) => setTag(e.target.value)} className={inputCls}>
+                {MARKET_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">Meet-up spot</span>
+            <input
+              value={location}
+              onChange={(e) => { setLocation(e.target.value); setError(""); }}
+              placeholder="e.g. Hall 3 · East gate"
+              className={inputCls}
+              maxLength={40}
+            />
+          </label>
+
+          <div>
+            <span className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">Cover colour</span>
+            <div className="flex gap-2">
+              {COVER_COLORS.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setColor(c)}
+                  className={`h-9 w-9 rounded-lg border-2 transition-all hover:-translate-y-0.5 ${color === c ? "border-ink shadow-block-sm" : "border-ink/25"}`}
+                  style={{ backgroundColor: c }}
+                  aria-label={`Cover colour ${c}`}
+                >
+                  {color === c && <Check className="mx-auto h-4 w-4 text-paper" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="mb-1 block font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+              One-line pitch <span className="normal-case tracking-normal text-ink-soft/70">(optional)</span>
+            </span>
+            <input
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              placeholder="e.g. Comes with charger and case"
+              className={inputCls}
+              maxLength={70}
+            />
+          </label>
+
+          {error && (
+            <p className="rounded-lg border-2 border-rasp bg-rasp/10 px-3.5 py-2.5 text-sm font-semibold text-rasp">{error}</p>
+          )}
+
+          <div className="flex gap-2 border-t-2 border-line pt-4">
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center gap-1.5 rounded-lg border-2 border-ink bg-card px-4 py-2.5 font-display text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-block-sm active:translate-y-0"
+            >
+              <CloseIcon className="h-4 w-4" /> Cancel
+            </button>
+            <button
+              onClick={submit}
+              disabled={!valid}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 font-display text-sm font-bold transition-all ${
+                valid
+                  ? "border-ink bg-gold shadow-block hover:-translate-y-0.5 hover:shadow-[7px_7px_0_0_var(--color-ink)] active:translate-y-0 active:shadow-block-sm"
+                  : "cursor-not-allowed border-ink/25 bg-card text-ink-soft"
+              }`}
+            >
+              <Store className="h-4 w-4" /> Post to marketplace
+            </button>
+          </div>
+        </div>
+
+        {/* Live preview — the exact card that goes live */}
+        <div>
+          <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-ink-soft">
+            Live preview
+            <span className="ml-1 inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-moss align-middle" />
+          </p>
+          <article className="overflow-hidden rounded-xl border-2 border-ink bg-card shadow-block-sm">
+            <div className="relative flex aspect-[4/3] items-center justify-center" style={{ backgroundColor: color }}>
+              <div
+                className="pointer-events-none absolute inset-0 opacity-[0.15]"
+                style={{ backgroundImage: "radial-gradient(var(--color-paper) 1.3px, transparent 1.3px)", backgroundSize: "15px 15px" }}
+              />
+              <span className="font-display text-4xl font-extrabold text-paper drop-shadow-[3px_3px_0_rgba(16,34,26,0.5)]">
+                {big}
+              </span>
+              <span className="absolute left-3 top-3 rotate-[-3deg] rounded-md border-2 border-ink bg-gold px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
+                {tag}
+              </span>
+            </div>
+            <div className="p-4">
+              <h3 className="font-display text-base font-extrabold leading-snug">
+                {title.trim() || "Your item's title"}
+              </h3>
+              {desc.trim() && <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">{desc}</p>}
+              <p className="mt-1 font-display text-xl font-extrabold text-pine">
+                {Number.isFinite(priceNum) && priceNum >= 1 ? fmtGHS(Math.round(priceNum)) : "GHS —"}
+              </p>
+              <div className="mt-2.5 flex items-center justify-between gap-2 border-t-2 border-line pt-2.5">
+                <p className="font-mono text-[11px] leading-tight text-ink-soft">
+                  {me.name.split(" ")[0]} · {me.level}
+                  <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{location.trim() || "meet-up spot"}</span>
+                </p>
+                <span className="flex shrink-0 items-center gap-1.5 rounded-lg border-2 border-ink bg-gold px-3 py-1.5 text-xs font-bold">
+                  <Chat className="h-3.5 w-3.5" /> Message
+                </span>
+              </div>
+            </div>
+          </article>
+          <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+            This is exactly what buyers see
+          </p>
+        </div>
+      </div>
+    </ModalShell>
   );
 }

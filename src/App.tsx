@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  announcements, events, fmt, initialPosts, toWriter,
+  announcements, events, fmt, initialPosts, listings as seedListings, toWriter,
 } from "./data";
+import type { Listing } from "./data";
 import type { Category, Draft, Post, User, Writer } from "./data";
 import { clearSession, getSession, markVerified, setSession } from "./lib/auth";
 import { useRevealAll } from "./lib/hooks";
@@ -49,6 +50,7 @@ export default function App() {
   const [reportFor, setReportFor] = useState<string | null>(null);
   const [infoTopic, setInfoTopic] = useState<string | null>(null);
   const [campus, setCampus] = useState("Heritage Christian University");
+  const [marketListings, setMarketListings] = useState<Listing[]>(seedListings);
   const [rsvps, setRsvps] = useState<Set<string>>(new Set());
   const [follows, setFollows] = useState<Set<string>>(new Set());
   const [joined, setJoined] = useState<Set<string>>(new Set());
@@ -184,6 +186,17 @@ export default function App() {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+  };
+
+  /* ----- marketplace ----- */
+  const onSellListing = (l: Listing) => {
+    setMarketListings((ls) => [l, ...ls]);
+    notify("Your listing is live on the marketplace");
+  };
+
+  const onDeleteListing = (id: string) => {
+    setMarketListings((ls) => ls.filter((l) => l.id !== id));
+    notify("Listing taken down");
   };
 
   const onTopic = (tag: string) => {
@@ -373,7 +386,15 @@ export default function App() {
             <DiscoverView follows={follows} onFollow={onFollow} joined={joined} onJoin={onJoin} notify={notify} onShareNotice={onShareNotice} />
           )}
           {view === "events" && <EventsView rsvps={rsvps} onRsvp={onRsvp} notify={notify} campus={campus} />}
-          {view === "market" && <MarketView notify={notify} />}
+          {view === "market" && (
+            <MarketView
+              listings={marketListings}
+              me={me}
+              onSell={onSellListing}
+              onDelete={onDeleteListing}
+              notify={notify}
+            />
+          )}
           {view === "studio" && (
             <StudioView
               notify={notify}

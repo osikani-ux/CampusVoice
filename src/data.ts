@@ -176,7 +176,13 @@ export interface Listing {
   image?: string;
   cover?: { bg: string; big: string };
   tag: string;
+  desc?: string;
+  mine?: boolean;
 }
+
+export const MARKET_TAGS = ["Phones", "Laptops", "Fashion", "Books", "Hostel", "Creator", "Furniture", "Other"];
+
+export const COVER_COLORS = ["#14603f", "#b07c00", "#d93a5b", "#0e7c7b", "#2456a6", "#a34a8c"];
 
 export interface Service {
   id: string;
