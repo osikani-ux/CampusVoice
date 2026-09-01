@@ -1,0 +1,2 @@
+# CampusVoice
+CampusVoice Platform Vision
